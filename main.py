@@ -82,13 +82,13 @@ def start_bot():
     dp.add_handler(CommandHandler("start", start))
 
     # Установим webhook
-    bot.set_webhook(url=f'https://myapp.onrender.com/{bot_token}')
+    bot.set_webhook(url=f'https://olx-bot-n7vf.onrender.com/{bot_token}')
 
     # Запуск бота
     updater.start_webhook(listen="0.0.0.0",
                           port=80,
                           url_path=bot_token,
-                          webhook_url=f'https://myapp.onrender.com/{bot_token}')
+                          webhook_url=f'https://olx-bot-n7vf.onrender.com/{bot_token}')
 
 if __name__ == '__main__':
     # Запуск парсинга в фоновом потоке
