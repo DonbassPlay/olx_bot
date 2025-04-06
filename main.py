@@ -1,10 +1,11 @@
 import requests
 from bs4 import BeautifulSoup
 import telegram
-import time
 from flask import Flask
 from telegram import Update
 from telegram.ext import Updater, CommandHandler, CallbackContext
+import threading
+import time
 
 # Указываем токен от BotFather
 bot_token = '7805081446:AAHe2t--zURAnjoSXs3TGwTq0XYE1B_kiX0'
@@ -15,27 +16,35 @@ app = Flask(__name__)
 
 # Функция для парсинга OLX
 def get_new_iphone_ads():
-    url = 'https://www.olx.pl/elektronika/telefony/iphone/'
-    response = requests.get(url)
-    soup = BeautifulSoup(response.text, 'html.parser')
-    
-    # Найти все элементы с объявлениями (можно уточнить селекторы)
-    ads = soup.find_all('div', {'class': 'offer-wrapper'})
-    
-    # Собираем ссылки и заголовки объявлений
-    new_ads = []
-    for ad in ads:
-        title = ad.find('strong').get_text() if ad.find('strong') else 'Без названия'
-        link = ad.find('a')['href']
-        new_ads.append(f'{title}\n{link}')
-    
-    return new_ads
+    try:
+        url = 'https://www.olx.pl/elektronika/telefony/iphone/'
+        response = requests.get(url)
+        response.raise_for_status()  # Проверяем, что запрос успешен
+        soup = BeautifulSoup(response.text, 'html.parser')
+        
+        # Найти все элементы с объявлениями (можно уточнить селекторы)
+        ads = soup.find_all('div', {'class': 'offer-wrapper'})
+        
+        # Собираем ссылки и заголовки объявлений
+        new_ads = []
+        for ad in ads:
+            title = ad.find('strong').get_text() if ad.find('strong') else 'Без названия'
+            link = ad.find('a')['href']
+            new_ads.append(f'{title}\n{link}')
+        
+        return new_ads
+    except Exception as e:
+        print(f"Ошибка при парсинге: {e}")
+        return []
 
 # Отправляем сообщения в Telegram
 def send_to_telegram(new_ads):
-    bot = telegram.Bot(token=bot_token)
-    for ad in new_ads:
-        bot.send_message(chat_id=chat_id, text=ad)
+    try:
+        bot = telegram.Bot(token=bot_token)
+        for ad in new_ads:
+            bot.send_message(chat_id=chat_id, text=ad)
+    except Exception as e:
+        print(f"Ошибка при отправке сообщения: {e}")
 
 # Обработчик команды /start
 def start(update: Update, context: CallbackContext):
@@ -66,11 +75,10 @@ def start_bot():
         time.sleep(120)  # Пауза 2 минуты
 
 if __name__ == '__main__':
-    from threading import Thread
     # Запуск бота в фоновом потоке
-    thread = Thread(target=start_bot)
-    thread.daemon = True
-    thread.start()
+    bot_thread = threading.Thread(target=start_bot)
+    bot_thread.daemon = True
+    bot_thread.start()
     
     # Запуск Flask-сервера
     app.run(host='0.0.0.0', port=80)
