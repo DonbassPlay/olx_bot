@@ -6,6 +6,7 @@ from flask import Flask, request
 from telegram import Update
 from telegram.ext import Updater, CommandHandler, CallbackContext
 from threading import Thread
+import os  # Импортируем модуль os для получения порта из окружения
 
 # Указываем токен от BotFather
 bot_token = '7805081446:AAHe2t--zURAnjoSXs3TGwTq0XYE1B_kiX0'
@@ -63,8 +64,13 @@ def parse_and_send_ads():
 @app.route(f'/{bot_token}', methods=['POST'])
 def webhook():
     print("Webhook received")
-    update = Update.de_json(request.get_json(), bot)
-    dp.process_update(update)
+    print(f"Request Data: {request.get_json()}")  # Логируем данные запроса
+    try:
+        update = Update.de_json(request.get_json(), bot)
+        dp.process_update(update)
+        print("Update processed successfully")
+    except Exception as e:
+        print(f"Error processing update: {e}")
     return '', 200
 
 # Главная функция для парсинга в фоновом режиме
@@ -85,9 +91,12 @@ def start_bot():
     # Установим webhook
     bot.set_webhook(url=f'https://olx-bot-n7vf.onrender.com/{bot_token}')
 
+    # Получаем порт из окружения Render (если он есть), если нет - используем 80
+    port = os.environ.get('PORT', 80)
+
     # Запуск бота
     updater.start_webhook(listen="0.0.0.0",
-                          port=80,
+                          port=port,
                           url_path=bot_token,
                           webhook_url=f'https://olx-bot-n7vf.onrender.com/{bot_token}')
 
@@ -99,4 +108,4 @@ if __name__ == '__main__':
     
     # Запуск Flask-сервера и бота
     start_bot()
-    app.run(host='0.0.0.0', port=80)
+    app.run(host='0.0.0.0', port=int(os.environ.get('PORT', 80)))  # Используем порт из окружения
