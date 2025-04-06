@@ -3,6 +3,7 @@ from bs4 import BeautifulSoup
 import telegram
 import time
 from flask import Flask
+from telegram.ext import Updater, CommandHandler
 
 # Указываем токен от BotFather
 bot_token = '7805081446:AAHe2t--zURAnjoSXs3TGwTq0XYE1B_kiX0'
@@ -35,6 +36,10 @@ def send_to_telegram(new_ads):
     for ad in new_ads:
         bot.send_message(chat_id=chat_id, text=ad)
 
+# Обработчик команды /start
+def start(update, context):
+    update.message.reply_text("Привет! Я буду присылать тебе новые объявления iPhone с OLX!")
+
 # Главная функция, которая будет запускать бота в фоновом режиме
 @app.route('/')
 def home():
@@ -42,6 +47,17 @@ def home():
 
 # Запуск бота и Flask
 def start_bot():
+    # Настроим Updater и Dispatcher
+    updater = Updater(bot_token, use_context=True)
+    dp = updater.dispatcher
+    
+    # Обработчик команды /start
+    dp.add_handler(CommandHandler("start", start))
+    
+    # Запуск бота
+    updater.start_polling()
+
+    # Запуск парсинга каждые 2 минуты
     while True:
         new_ads = get_new_iphone_ads()
         if new_ads:
