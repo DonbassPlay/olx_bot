@@ -2,9 +2,9 @@ import requests
 from bs4 import BeautifulSoup
 import telegram
 import time
-from flask import Flask
+from flask import Flask, request
 from telegram import Update
-from telegram.ext import Updater, CommandHandler, CallbackContext, JobQueue
+from telegram.ext import Updater, CommandHandler, CallbackContext
 from threading import Thread
 
 # Указываем токен от BotFather
@@ -48,41 +48,54 @@ def send_to_telegram(new_ads):
 
 # Обработчик команды /start
 def start(update: Update, context: CallbackContext):
-    print("Command /start received")  # Логирование получения команды /start
+    print("Command /start received")
     update.message.reply_text("Привет! Я буду присылать тебе новые объявления iPhone с OLX!")
 
 # Функция для парсинга в фоновом режиме
-def parse_and_send_ads(context: CallbackContext):
-    new_ads = get_new_iphone_ads()
-    if new_ads:
-        send_to_telegram(new_ads)
+def parse_and_send_ads():
+    while True:
+        new_ads = get_new_iphone_ads()
+        if new_ads:
+            send_to_telegram(new_ads)
+        time.sleep(120)  # Пауза 2 минуты
 
-# Главная функция для запуска бота
+# Webhook для получения обновлений от Telegram
+@app.route(f'/{bot_token}', methods=['POST'])
+def webhook():
+    update = Update.de_json(request.get_json(), bot)
+    dp.process_update(update)
+    return '', 200
+
+# Главная функция для парсинга в фоновом режиме
+@app.route('/')
+def home():
+    return 'Бот работает!'
+
 def start_bot():
     # Настроим Updater и Dispatcher
+    global bot
+    bot = telegram.Bot(token=bot_token)
     updater = Updater(bot_token, use_context=True)
     dp = updater.dispatcher
     
     # Обработчик команды /start
     dp.add_handler(CommandHandler("start", start))
 
-    # Настройка JobQueue для регулярного запуска парсинга
-    job_queue = updater.job_queue
-    job_queue.run_repeating(parse_and_send_ads, interval=120, first=0)  # Повторение каждые 2 минуты
+    # Установим webhook
+    bot.set_webhook(url=f'https://yourdomain.com/{bot_token}')
 
     # Запуск бота
-    updater.start_polling()
-
-# Главная функция, которая будет запускать Flask-сервер
-@app.route('/')
-def home():
-    return 'Бот работает!'
+    updater.start_webhook(listen="0.0.0.0",
+                          port=80,
+                          url_path=bot_token,
+                          webhook_url=f'https://yourdomain.com/{bot_token}')
 
 if __name__ == '__main__':
-    # Запуск Flask в отдельном потоке
-    flask_thread = Thread(target=lambda: app.run(host='0.0.0.0', port=80))
-    flask_thread.daemon = True
-    flask_thread.start()
-
-    # Запуск бота
+    # Запуск парсинга в фоновом потоке
+    parse_thread = Thread(target=parse_and_send_ads)
+    parse_thread.daemon = True
+    parse_thread.start()
+    
+    # Запуск Flask-сервера и бота
     start_bot()
+    app.run(host='0.0.0.0', port=80)
