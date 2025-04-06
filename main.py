@@ -81,7 +81,7 @@ if __name__ == '__main__':
     parse_thread.daemon = True
     parse_thread.start()
     
-    # Запуск бота
+    # Запуск бота в фоновом потоке
     bot_thread = Thread(target=start_bot)
     bot_thread.daemon = True
     bot_thread.start()
