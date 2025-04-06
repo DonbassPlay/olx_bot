@@ -3,11 +3,12 @@ from bs4 import BeautifulSoup
 import telegram
 import time
 from flask import Flask
-from telegram.ext import Updater, CommandHandler
+from telegram import Update
+from telegram.ext import Updater, CommandHandler, CallbackContext
 
 # Указываем токен от BotFather
 bot_token = '7805081446:AAHe2t--zURAnjoSXs3TGwTq0XYE1B_kiX0'
-chat_id = 'ТВОЙ_CHAT_ID'  # Замените на свой chat_id
+chat_id = '2035796372'  # Ваш chat_id
 
 # Инициализация Flask
 app = Flask(__name__)
@@ -37,7 +38,7 @@ def send_to_telegram(new_ads):
         bot.send_message(chat_id=chat_id, text=ad)
 
 # Обработчик команды /start
-def start(update, context):
+def start(update: Update, context: CallbackContext):
     update.message.reply_text("Привет! Я буду присылать тебе новые объявления iPhone с OLX!")
 
 # Главная функция, которая будет запускать бота в фоновом режиме
