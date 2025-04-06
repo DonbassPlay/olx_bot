@@ -62,6 +62,7 @@ def parse_and_send_ads():
 # Webhook для получения обновлений от Telegram
 @app.route(f'/{bot_token}', methods=['POST'])
 def webhook():
+    print("Webhook received")
     update = Update.de_json(request.get_json(), bot)
     dp.process_update(update)
     return '', 200
