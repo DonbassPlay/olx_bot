@@ -77,6 +77,20 @@ def webhook():
 def home():
     return 'Бот работает!'
 
+def set_telegram_webhook():
+    try:
+        # Устанавливаем вебхук для бота автоматически
+        webhook_url = f'https://olx-bot-n7vf.onrender.com/{bot_token}'
+        response = requests.get(f'https://api.telegram.org/bot{bot_token}/setWebhook?url={webhook_url}')
+        
+        # Логируем ответ от Telegram API
+        if response.status_code == 200:
+            print(f"Webhook set successfully: {response.text}")
+        else:
+            print(f"Failed to set webhook: {response.text}")
+    except Exception as e:
+        print(f"Error setting webhook: {e}")
+
 def start_bot():
     global bot, dp  # Определяем bot и dp как глобальные переменные
 
@@ -88,12 +102,8 @@ def start_bot():
     # Обработчик команды /start
     dp.add_handler(CommandHandler("start", start))
 
-    # Установим webhook через Telegram API
-    response = requests.get(f'https://api.telegram.org/bot{bot_token}/setWebhook?url=https://olx-bot-n7vf.onrender.com/{bot_token}')
-    print(f"Webhook set response: {response.text}")  # Логируем ответ от Telegram API
-
-    # Установим вебхук
-    bot.set_webhook(url=f'https://olx-bot-n7vf.onrender.com/{bot_token}')
+    # Установим вебхук для Telegram
+    set_telegram_webhook()
 
     # Получаем порт из окружения Render (если он есть), если нет - используем 80
     port = os.environ.get('PORT', 80)
