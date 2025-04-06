@@ -2,10 +2,14 @@ import requests
 from bs4 import BeautifulSoup
 import telegram
 import time
+from flask import Flask
 
 # Указываем токен от BotFather
 bot_token = '7805081446:AAHe2t--zURAnjoSXs3TGwTq0XYE1B_kiX0'
 chat_id = 'ТВОЙ_CHAT_ID'  # Замените на свой chat_id
+
+# Инициализация Flask
+app = Flask(__name__)
 
 # Функция для парсинга OLX
 def get_new_iphone_ads():
@@ -31,8 +35,13 @@ def send_to_telegram(new_ads):
     for ad in new_ads:
         bot.send_message(chat_id=chat_id, text=ad)
 
-# Главная функция
-def main():
+# Главная функция, которая будет запускать бота в фоновом режиме
+@app.route('/')
+def home():
+    return 'Бот работает!'
+
+# Запуск бота и Flask
+def start_bot():
     while True:
         new_ads = get_new_iphone_ads()
         if new_ads:
@@ -40,5 +49,11 @@ def main():
         time.sleep(120)  # Пауза 2 минуты
 
 if __name__ == '__main__':
-    main()
+    from threading import Thread
+    # Запуск бота в фоновом потоке
+    thread = Thread(target=start_bot)
+    thread.daemon = True
+    thread.start()
     
+    # Запуск Flask-сервера
+    app.run(host='0.0.0.0', port=80)
