@@ -15,6 +15,9 @@ chat_id = '2035796372'  # Ваш chat_id
 # Инициализация Flask
 app = Flask(__name__)
 
+# Инициализация объекта бота
+bot = telegram.Bot(token=bot_token)
+
 # Функция для парсинга OLX
 def get_new_iphone_ads():
     try:
@@ -41,7 +44,6 @@ def get_new_iphone_ads():
 # Отправляем сообщения в Telegram
 def send_to_telegram(new_ads):
     try:
-        bot = telegram.Bot(token=bot_token)
         for ad in new_ads:
             bot.send_message(chat_id=chat_id, text=ad)
     except Exception as e:
