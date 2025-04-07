@@ -4,7 +4,7 @@ import telegram
 import time
 from flask import Flask, request
 from telegram import Update
-from telegram.ext import Updater, CommandHandler, CallbackContext
+from telegram.ext import Application, CommandHandler
 from threading import Thread
 import os
 
@@ -17,8 +17,7 @@ app = Flask(__name__)
 
 # Глобальные переменные для bot и dp
 bot = None
-updater = None
-dp = None
+application = None
 
 # Функция для парсинга OLX
 def get_new_iphone_ads():
@@ -53,9 +52,9 @@ def send_to_telegram(new_ads):
         print(f"Ошибка при отправке сообщения: {e}")
 
 # Обработчик команды /start
-def start(update: Update, context: CallbackContext):
+async def start(update: Update, context):
     print("Command /start received")
-    update.message.reply_text("Привет! Я буду присылать тебе новые объявления iPhone с OLX!")
+    await update.message.reply_text("Привет! Я буду присылать тебе новые объявления iPhone с OLX!")
 
 # Функция для парсинга в фоновом режиме
 def parse_and_send_ads():
@@ -70,17 +69,16 @@ def parse_and_send_ads():
 def webhook():
     print("Webhook received")
     try:
-        # Инициализация bot и dp в webhook
-        global bot, dp
+        global bot, application
         
+        # Инициализация bot и application в webhook
         if not bot:
             bot = telegram.Bot(token=bot_token)
-        if not dp:
-            updater = Updater(bot_token, use_context=True)
-            dp = updater.dispatcher
-        
+        if not application:
+            application = Application.builder().token(bot_token).build()
+
         update = Update.de_json(request.get_json(), bot)  # Используем глобальную переменную bot
-        dp.process_update(update)  # Обрабатываем обновление
+        application.process_update(update)  # Обрабатываем обновление
         print("Update processed successfully")
     except Exception as e:
         print(f"Error processing update: {e}")
@@ -106,15 +104,14 @@ def set_telegram_webhook():
         print(f"Error setting webhook: {e}")
 
 def start_bot():
-    global bot, dp  # Определяем bot и dp как глобальные переменные
+    global bot, application  # Определяем bot и application как глобальные переменные
 
-    # Инициализация бота и диспетчера
+    # Инициализация бота и приложения
     bot = telegram.Bot(token=bot_token)
-    updater = Updater(bot_token, use_context=True)
-    dp = updater.dispatcher  # Инициализация dispatcher для обработки команд
+    application = Application.builder().token(bot_token).build()
 
     # Обработчик команды /start
-    dp.add_handler(CommandHandler("start", start))
+    application.add_handler(CommandHandler("start", start))
 
     # Установим вебхук для Telegram
     set_telegram_webhook()
@@ -123,10 +120,10 @@ def start_bot():
     port = os.environ.get('PORT', 80)
 
     # Запуск бота
-    updater.start_webhook(listen="0.0.0.0",
-                          port=port,
-                          url_path=bot_token,
-                          webhook_url=f'https://olx-bot-n7vf.onrender.com/{bot_token}')
+    application.run_webhook(listen="0.0.0.0",
+                            port=port,
+                            url_path=bot_token,
+                            webhook_url=f'https://olx-bot-n7vf.onrender.com/{bot_token}')
 
 if __name__ == '__main__':
     # Запуск парсинга в фоновом потоке
