@@ -65,7 +65,7 @@ def parse_and_send_ads():
 def webhook():
     print("Webhook received")
     try:
-        update = Update.de_json(request.get_json(), bot)
+        update = Update.de_json(request.get_json(), bot)  # Используем глобальную переменную bot
         dp.process_update(update)
         print("Update processed successfully")
     except Exception as e:
