@@ -15,9 +15,6 @@ chat_id = '2035796372'  # Ваш chat_id
 # Инициализация Flask
 app = Flask(__name__)
 
-# Инициализация объекта бота
-bot = telegram.Bot(token=bot_token)
-
 # Функция для парсинга OLX
 def get_new_iphone_ads():
     try:
@@ -68,7 +65,7 @@ def webhook():
     print("Webhook received")
     try:
         update = Update.de_json(request.get_json(), bot)
-        application.process_update(update)  # Обработка обновлений
+        application.process_update(update)  # Используем приложение для обработки обновлений
         print("Update processed successfully")
     except Exception as e:
         print(f"Error processing update: {e}")
