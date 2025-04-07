@@ -15,6 +15,9 @@ chat_id = '2035796372'  # Ваш chat_id
 # Инициализация Flask
 app = Flask(__name__)
 
+# Объявляем bot как глобальную переменную
+bot = None
+
 # Функция для парсинга OLX
 def get_new_iphone_ads():
     try:
@@ -41,7 +44,7 @@ def get_new_iphone_ads():
 # Отправляем сообщения в Telegram
 def send_to_telegram(new_ads):
     try:
-        bot = telegram.Bot(token=bot_token)
+        global bot
         for ad in new_ads:
             bot.send_message(chat_id=chat_id, text=ad)
     except Exception as e:
@@ -65,6 +68,7 @@ def parse_and_send_ads():
 def webhook():
     print("Webhook received")
     try:
+        global bot
         update = Update.de_json(request.get_json(), bot)  # Используем глобальную переменную bot
         dp.process_update(update)
         print("Update processed successfully")
