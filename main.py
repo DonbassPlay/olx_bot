@@ -17,6 +17,7 @@ app = Flask(__name__)
 
 # Глобальные переменные для bot и dp
 bot = None
+updater = None
 dp = None
 
 # Функция для парсинга OLX
@@ -69,7 +70,15 @@ def parse_and_send_ads():
 def webhook():
     print("Webhook received")
     try:
-        global dp, bot
+        # Инициализация bot и dp в webhook
+        global bot, dp
+        
+        if not bot:
+            bot = telegram.Bot(token=bot_token)
+        if not dp:
+            updater = Updater(bot_token, use_context=True)
+            dp = updater.dispatcher
+        
         update = Update.de_json(request.get_json(), bot)  # Используем глобальную переменную bot
         dp.process_update(update)  # Обрабатываем обновление
         print("Update processed successfully")
