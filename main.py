@@ -7,6 +7,7 @@ from telegram import Update
 from telegram.ext import Application, CommandHandler
 from threading import Thread
 import os
+import asyncio
 
 # Указываем токен от BotFather
 bot_token = '7805081446:AAHe2t--zURAnjoSXs3TGwTq0XYE1B_kiX0'
@@ -15,7 +16,7 @@ chat_id = '2035796372'  # Ваш chat_id
 # Инициализация Flask
 app = Flask(__name__)
 
-# Глобальные переменные для bot и dp
+# Глобальные переменные для bot и application
 bot = None
 application = None
 
@@ -66,7 +67,7 @@ def parse_and_send_ads():
 
 # Webhook для получения обновлений от Telegram
 @app.route(f'/{bot_token}', methods=['POST'])
-def webhook():
+async def webhook():
     print("Webhook received")
     try:
         global bot, application
@@ -78,7 +79,7 @@ def webhook():
             application = Application.builder().token(bot_token).build()
 
         update = Update.de_json(request.get_json(), bot)  # Используем глобальную переменную bot
-        application.process_update(update)  # Обрабатываем обновление
+        await application.process_update(update)  # Асинхронно обрабатываем обновление
         print("Update processed successfully")
     except Exception as e:
         print(f"Error processing update: {e}")
